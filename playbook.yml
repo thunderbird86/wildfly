@@ -1,0 +1,18 @@
+---
+
+- hosts: wildfly-centos6
+  tasks:
+    - name: install initscripts
+      package:
+        name: initscripts
+        state: present
+
+- hosts: all
+  vars:
+    wildfly_remove_download_file: false
+    wildfly_management_users:
+      - { name: 'admin', password: 'admin123' }
+    wildfly_app_users:
+      - { name: 'ejb', password: 'ouhie0requ3ooRah' }
+  roles:
+    - role: thunderbird86.wildfly

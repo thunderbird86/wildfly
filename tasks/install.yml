@@ -1,0 +1,37 @@
+---
+# task file for wildfly
+
+- name: Download wildfly tar file
+  get_url:
+    url: '{{ wildfly_download_url }}'
+    dest: '{{ wildfly_download_dir }}/{{ wildfly_download_file }}'
+
+- name: Create wildfly group
+  group:
+    name: '{{ wildfly_group }}'
+    state: present
+
+- name: Create wildfly user
+  user:
+    name: '{{ wildfly_user }}'
+    group: '{{ wildfly_group }}'
+    createhome: no
+    shell: "{{ wildfly_user_shell |default(omit) }}"
+    state: present
+
+- name: Unarchive downloaded file
+  unarchive:
+    src: '{{ wildfly_download_dir }}/{{ wildfly_download_file }}'
+    dest: '{{ wildfly_install_dir }}'
+    owner: '{{ wildfly_user }}'
+    group: '{{ wildfly_group }}'
+    mode: '0750'
+    copy: no
+    creates: "{{ wildfly_dir }}/bin/standalone.sh"
+
+- name: Create symlink to installed version
+  file:
+    state: link
+    src: "{{ wildfly_dir }}"
+    dest: "{{ wildfly_install_dir }}/wildfly"
+  when: wildfly_create_symlink

@@ -1,0 +1,69 @@
+---
+# task file for wildfly
+
+- name: Create wildfly etc directory
+  file:
+    path: '{{ wildfly_conf_dir }}'
+    state: directory
+    owner: '{{ wildfly_user }}'
+    group: '{{ wildfly_group }}'
+    mode: '0750'
+
+- name: Copy wildfly configuration
+  template:
+    src: wildfly.conf.j2
+    dest: '{{ wildfly_conf_dir }}/wildfly.conf'
+    owner: root
+    group: root
+    mode: '0640'
+  notify:
+    - restart wildfly
+    - change standalone data mode
+
+- name: Create symlink to /etc/default/wildfly.conf
+  file:
+    state: link
+    src: '{{ wildfly_conf_dir }}/wildfly.conf'
+    dest: /etc/default/wildfly.conf
+
+- name: Copy wildfly properties file
+  template:
+    src: wildfly.properties.j2
+    dest: '{{ wildfly_conf_dir }}/wildfly.properties'
+    owner: '{{ wildfly_user }}'
+    group: '{{ wildfly_group }}'
+    mode: '0640'
+  notify:
+    - restart wildfly
+    - change standalone data mode
+
+- name: Create symlink to upstream init script
+  file:
+    state: link
+    src: '{{ wildfly_install_dir }}/wildfly/{{ wildfly_init_src_path }}/init.d/wildfly-init-{{ ansible_os_family | lower }}.sh'
+    dest: '{{ wildfly_init_dir }}/wildfly'
+  when: ansible_service_mgr in ['init', 'upstart']
+  notify:
+    - restart wildfly
+    - change standalone data mode
+
+- name: Copy wildfly systemd unit file
+  template: src=wildfly.service.j2 dest={{ wildfly_systemd_dir }}/wildfly.service owner=root
+            group=root mode=0640
+  when: ansible_service_mgr == 'systemd'
+  notify:
+    - restart wildfly
+    - change standalone data mode
+
+- name: Enable and start the service
+  service:
+    name: wildfly
+    state: started
+    enabled: yes
+  when: wildfly_manage_service
+
+- name: Delete wildfly tar file
+  file:
+    path: '{{ wildfly_download_dir }}/{{ wildfly_download_file }}'
+    state: absent
+  when: wildfly_remove_download_file
