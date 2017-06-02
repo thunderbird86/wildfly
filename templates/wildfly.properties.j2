@@ -1,5 +1,9 @@
 # System properties for wildfly
+{% if jboss_bind_addres %}
 jboss.bind.address={{ wildfly_bind_address }}
+{% else %}
+jboss.bind.address=0.0.0.0
+{% endif %}
 jboss.management.http.port={{ wildfly_manage_http_port }}
 jboss.management.https.port={{ wildfly_manage_https_port }}
 jboss.http.port={{ wildfly_http_port }}
